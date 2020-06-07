@@ -1,0 +1,4 @@
+---
+- import_playbook: kube-dependency.yml
+- import_playbook: master-with-calico.yml
+- import_playbook: dashboard\create-dashboard.yml
