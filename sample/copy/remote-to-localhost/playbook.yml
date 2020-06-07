@@ -1,3 +1,7 @@
 - hosts: testnode
   tasks: 
-    - name: copy remote files to local directory
+    - name: copy remote file to local directory
+      fetch: 
+        src: /root/sample_data/remote-to-local.txt
+        dest: /root/data_from_remote_source/remote-to-local.txt
+
