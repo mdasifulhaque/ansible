@@ -1,1 +1,11 @@
-- hosts: master
+- hosts: all
+  tasks:
+    - name: Create Ansible Service User
+      user:
+        name: ansible_service_user
+        group: "{{ admin_group }}"
+        append: yes
+        create_home: true
+        comment: "Ansible Managment user"
+        expire: -1 
+  

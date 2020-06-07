@@ -1,0 +1,8 @@
+[centos]
+192.168.10.15
+[cemtos:vars]
+admin_group=wheel
+[debian]
+192.168.10.[2:5]
+[debian:vars]
+admin_group=sudo
