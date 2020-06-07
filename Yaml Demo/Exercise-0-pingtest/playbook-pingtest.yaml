@@ -1,0 +1,6 @@
+-
+  name: Check Connectivity to tager servers
+  host: all
+  task:
+    - name: Ping test
+    ping: 
