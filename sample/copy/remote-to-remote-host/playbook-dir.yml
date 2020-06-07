@@ -1,4 +1,4 @@
-- hosts:
+- hosts: test-node
   become: yes
   task: 
     
