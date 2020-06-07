@@ -5,7 +5,7 @@
       become_user: "{{ service_user }}"
       become_method: "{{ service_method }}"
       file:
-        path: '"{{ service_directory }}"/test1'
+        path: "{{ service_directory }}/test1"
         state: directory
         owner: "{{ service_user }}"
         group: "{{ service_group }}"
@@ -14,7 +14,7 @@
       become_user: "{{ service_user }}"
       become_method: "{{ service_method }}"
       file:
-        path: '"{{ service_directory }}"/test2'
+        path: "{{ service_directory }}/test2"
         state: directory
         owner: "{{ service_user }}"
         group: "{{ service_group }}"
