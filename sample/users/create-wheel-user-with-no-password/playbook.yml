@@ -10,7 +10,10 @@
       register: wheel_present
     
     - debug:
-        msg: wheel present wheel_present.stdout_lines 
+        msg: "{{ wheel_present.stdout_lines }}"
+
+    - debug: 
+        msg: "{{ wheel_present.stdout_lines }}" 
 
     - name: Allow 'wheel' group to have passwordless sudo
       lineinfile:
