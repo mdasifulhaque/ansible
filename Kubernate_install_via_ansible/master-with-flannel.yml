@@ -4,45 +4,47 @@
     service_user: ansible_service_user
     kubeadm_config_file: /etc/kubernetes/admin.conf
     service_group: wheel
+    service_method: sudo   
   tasks:
     - name: initialize the cluster
       become_user: "{{ service_user }}"
-      become_method: sudo
+      become_method: "{{ service_method }}"
       shell: kubeadm init --pod-network-cidr 10.244.0.0/16 >> cluster_initialize.txt
+      register: result
+      until: result.stdout.find("Your Kubernetes master has initialized successfully!") != -1
+      retries: 1
+      delay: 20
       args:
         chdir: $HOME
         creates: cluster_initialize.txt
-    - name: sleep for 20 seconds
-      wait_for:
-        timeout: 20
-
+   
     - name: create .kube directory
       become_user: "{{ service_user }}"
-      become_method: sudo 
+      become_method: "{{ service_method }}"
       file:
         path: $HOME/.kube
         state: directory
-        owner: "{{ service_user }}"
-        group: "{{ service_group }}"
+        owner: "{{service_user}}"
+        group: "{{service_group}}"
         mode: 0755
-      become: yes
+
 
     - name: check if admin.conf file exist
-      become: yes
       stat:
-        path: "{{ kubeadm_config_file }}"
+        path: "{{kubeadm_config_file}}"
       register: kubernetes_admin_config
 
+
     - name: copy admin.conf to user's kube config
-      become_user: "{{ service_user }}"
-      become_method: sudo
+      become_user: "{{service_user}}"
+      become_method: "{{ service_method }}"
       copy:
-        src: /etc/kubernetes/admin.conf
+        src: "{{kubeadm_config_file}}"
         dest: $HOME/.kube/config
         remote_src: yes
-        owner: "{{ service_user }}"
-        group: "{{ service_group }}"
+        owner:
       when: kubernetes_admin_config.stat.exists
+
 
     - name: install pod network
       become_user: "{{ service_user }}"
