@@ -2,8 +2,8 @@
   tasks: 
     - name: copy remote file to local directory
       fetch: 
-        src: /root/sample_data/remote-to-local.txt
-        dest: /root/data_from_remote_source/remote-to-local.txt
+        src: /root/sample_data/
+        dest: /root/data_from_remote_source/
         mode: 0774
         fail_on_missing: yes
 
