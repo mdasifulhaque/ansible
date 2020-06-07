@@ -1,0 +1,4 @@
+-hosts: test-node
+ become: yes
+ tasks:
+   - name: Test

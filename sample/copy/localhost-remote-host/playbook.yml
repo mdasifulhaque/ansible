@@ -6,3 +6,6 @@
   tasks: 
     - name: copy file to remote host from localhost 
       copy: 
+        src: local-to-remote.txt
+        dest: $HOME/local-to-remote
+        
