@@ -13,29 +13,33 @@
     - debug:
         msg: dashboard_output.stdout_lines
 
-    - name: copy dashboard config file to remote server
-      #become_user: "{{service_user}}"
+    - name: Copy multiple files in Ansible with different permissions
       copy:
-        src: cluster-role-rbac.yml
-        dest: "{{ configuration_file_location }}"
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+      - { src: 'cluster-role.yaml' ,dest: '"{{ configuration_file_location }}"/cluster-role.yaml'}
+      - { src: 'dashboard-adminuser.yaml' ,dest: '"{{ configuration_file_location }}"/dashboard-adminuser.yaml'}
+
+
 
     - name: create dashboard admin user
       shell: kubectl apply -f "{{ configuration_file_location }}"/dashboard-adminuser.yaml
       register: admin_user_output
 
     - debug:
-        msg: admin_user_output.stdout_lines
+        var: admin_user_output.stdout_lines
 
     - name: create cluster role
       shell: kubectl apply -f "{{ configuration_file_location }}"/cluster-role-rbac.yml
       register: clustercreate_output
 
     - debug:
-        msg: clustercreate_output.stdout_lines
+        var: clustercreate_output.stdout_lines
 
     - name: get user secret
       shell: kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
       register: secret_token_output
 
     - debug:
-        msg: secret_token_output.stdout_lines
+        var: secret_token_output.stdout_lines
