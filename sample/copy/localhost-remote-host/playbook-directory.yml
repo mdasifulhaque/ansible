@@ -1,10 +1,7 @@
 - hosts: testnode
   become: yes
-  vars: 
-    service_user: root
-
   tasks: 
-    - name: copy directory to remote host from localhost 
+    - name: copy directory to remote host from localhost
       copy: 
-        src: $HOME/mdasifulhaque/ansible_data/sample/copy
-        dest: $HOME/sample_data
+        src: /home/mdasifulhaque/ansible_data/sample/copy/localhost-remote-host/
+        dest: /root/sample_data
