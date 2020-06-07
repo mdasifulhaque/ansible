@@ -21,4 +21,4 @@
         name: "{{ item }}"
         groups: wheel
         append: yes
-      with_items: "{{ ansible_service_user }}"
+      with_items: "{{ service_user }}"
