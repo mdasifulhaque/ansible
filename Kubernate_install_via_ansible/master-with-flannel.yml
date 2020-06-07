@@ -3,7 +3,7 @@
   vars:
     service_user: ansible_service_user
     kubeadm_config_file: /etc/kubernetes/admin.conf
-
+    service_group: wheel
   tasks:
     - name: initialize the cluster
       become_user: "{{ service_user }}"
@@ -23,34 +23,30 @@
         path: $HOME/.kube
         state: directory
         owner: "{{ service_user }}"
-        group: "{{ service_user }}"
+        group: "{{ service_group }}"
         mode: 0755
       become: yes
 
     - name: check if admin.conf file exist
+      become: yes
       stat:
-        path: "{{kubeadm_config_file}}"
+        path: "{{ kubeadm_config_file }}"
       register: kubernetes_admin_config
 
     - name: copy admin.conf to user's kube config
-      become_user: root
+      become_user: "{{ service_user }}"
+      become_method: sudo
       copy:
         src: /etc/kubernetes/admin.conf
         dest: $HOME/.kube/config
         remote_src: yes
         owner: "{{ service_user }}"
-        group: "{{ service_user }}"
+        group: "{{ service_group }}"
       when: kubernetes_admin_config.stat.exists
 
     - name: install pod network
-      become: yes
       become_user: "{{ service_user }}"
       shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml >> pod_network_setup.txt
       args:
         chdir: $HOME
         creates: pod_network_setup.txt
-
-    - name: install kubernetes_dashboard
-      become: yes
-      become_user: "{{ service_user }}"
-      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml

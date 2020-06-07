@@ -3,7 +3,7 @@
   become_user: "{{ service_user }}"
   vars:
     service_user: ansible_serviece_user
-    configuration_file_location: $HOME/"{{ service_user }}"/kubernetes_config/files
+    configuration_file_location: $HOME/{{ service_user }}/kubernetes_config/files
   tasks:
     - name: install kubernetes dashboard
       #become_user: "{{service_user}}"
@@ -18,28 +18,28 @@
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
       with_items:
-      - { src: 'cluster-role.yaml' ,dest: '"{{ configuration_file_location }}"/cluster-role.yaml'}
-      - { src: 'dashboard-adminuser.yaml' ,dest: '"{{ configuration_file_location }}"/dashboard-adminuser.yaml'}
+      - { src: 'cluster-role.yaml' ,dest: '{{ configuration_file_location }}/cluster-role.yaml'}
+      - { src: 'dashboard-adminuser.yaml' ,dest: '{{ configuration_file_location }}/dashboard-adminuser.yaml'}
 
 
 
     - name: create dashboard admin user
-      shell: kubectl apply -f "{{ configuration_file_location }}"/dashboard-adminuser.yaml
+      shell: kubectl apply -f {{ configuration_file_location }}/dashboard-adminuser.yaml
       register: admin_user_output
 
     - debug:
-        var: admin_user_output.stdout_lines
+        msg: "Andmin user create status {{admin_user_output.stdout_lines}}"
 
     - name: create cluster role
-      shell: kubectl apply -f "{{ configuration_file_location }}"/cluster-role-rbac.yml
+      shell: kubectl apply -f {{ configuration_file_location }}/cluster-role-rbac.yml
       register: clustercreate_output
 
     - debug:
-        var: clustercreate_output.stdout_lines
+        msg: "Dashboard create status {{ clustercreate_output.stdout_lines}}"
 
     - name: get user secret
       shell: kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
       register: secret_token_output
 
     - debug:
-        var: secret_token_output.stdout_lines
+        msg: "Secrect token for kubernetes dashboard {{ secret_token_output.stdout_lines}}"

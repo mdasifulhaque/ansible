@@ -3,37 +3,41 @@
   vars:
     service_user: ansible_service_user
     kubeadm_config_file: /etc/kubernetes/admin.conf
-
+    service_group: wheel
+    service_method: sudo   
   tasks:
     - name: initialize the cluster
-      become_user: "{{service_user}}"
+      become_user: "{{ service_user }}"
+      become_method: "{{ service_method }}"
       shell: kubeadm init --pod-network-cidr 10.244.0.0/16 >> cluster_initialize.txt
+      register: result
+      until: result.stdout.find("Your Kubernetes master has initialized successfully!") != -1
+      retries: 1
+      delay: 20
       args:
         chdir: $HOME
         creates: cluster_initialize.txt
-    - name: sleep for 20 seconds
-      wait_for:
-        timeout: 20
-
+   
     - name: create .kube directory
-      become_user: ansible_service_user
-      become_method: sudo
+      become_user: "{{ service_user }}"
+      become_method: "{{ service_method }}"
       file:
         path: $HOME/.kube
         state: directory
         owner: "{{service_user}}"
-        group: "{{service_user}}"
+        group: "{{service_group}}"
         mode: 0755
-      become: yes
+
 
     - name: check if admin.conf file exist
       stat:
         path: "{{kubeadm_config_file}}"
       register: kubernetes_admin_config
 
+
     - name: copy admin.conf to user's kube config
       become_user: "{{service_user}}"
-      become_method: sudo
+      become_method: "{{ service_method }}"
       copy:
         src: "{{kubeadm_config_file}}"
         dest: $HOME/.kube/config
@@ -41,8 +45,8 @@
         owner:
       when: kubernetes_admin_config.stat.exists
 
+
     - name: install pod network calico
-      become: yes
       become_user: "{{service_user}}"
       shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml >> calico_pod_network_setup.txt
       args:
@@ -50,27 +54,25 @@
         creates: calico_pod_network_setup.txt
 
 
-    - name: sleep for 60 seconds to make pods running
-      wait_for:
-        timeout: 60
+    - name: wait for pods to come up
+      become_user: "{{service_user}}"
+      shell: kubectl get pods -o json
+      register: kubectl_get_pods
+      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
 
 
     - name: taint nodes
+      become_user: "{{service_user}}"
       shell: kubectl taint nodes --all node-role.kubernetes.io/master-
       register: tained_output
 
 
     - debug:
-        msg: tained_output.stdout_lines
+        vars: tained_output.stdout_lines
 
     - name: get Nodes
       shell: kubectl get nodes -o wide
       register: nodes_status
 
     - debug: 
-        mgs: nodes_status.stdout_lines
-
-    - name: install kubernetes_dashboard
-      become: yes
-      become_user: "{{service_user}}"
-      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+        vars: nodes_status.stdout_lines
