@@ -1,0 +1,10 @@
+[centos]
+192.168.10.15
+[centos:vars]
+admin_group=wheel
+service_user=ansible_service_user
+service_method=sudo
+[debian]
+192.168.10.[2:5]
+[debian:vars]
+admin_group=sudo

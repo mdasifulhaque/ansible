@@ -1,4 +1,27 @@
--hosts: test-node
- become: yes
- tasks:
-   - name: Test
+- hosts: all
+  vars:
+    service_user: ansible_service_user
+
+  tasks:
+    - name: Make sure we have a 'wheel' group
+      group:
+        name: wheel
+        state: present
+      register: wheel_present
+    
+    - debug:
+        msg: wheel present wheel_present.stdout_lines 
+
+    - name: Allow 'wheel' group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%wheel'
+        line: '%wheel ALL=(ALL) NOPASSWD: ALL'
+        validate: visudo -cf %s
+
+    - name: Add sudoers users to wheel group
+      user:
+        name: "{{ service_user }}"
+        groups: wheel
+        append: yes

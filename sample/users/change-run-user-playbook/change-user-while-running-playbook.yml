@@ -1,0 +1,4 @@
+- hosts:
+  become_user: "{{ service_user }}"
+  become_method: "{{ service_method }}"
+  tasks:
