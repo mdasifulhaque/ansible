@@ -2,3 +2,17 @@
   become_user: "{{ service_user }}"
   become_method: "{{ service_method }}"
   tasks:
+    - name: create .kube directory
+      file:
+        path: $HOME/.kube
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: 0755
+    - name: create test directory
+      file:
+        path: $HOME/test_directory
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user }}"
+        mode: 0755
