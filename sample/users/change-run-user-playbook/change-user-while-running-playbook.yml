@@ -1,18 +1,21 @@
 - hosts: all
-  become_user: "{{ service_user }}"
-  become_method: "{{ service_method }}"
+  become: yes
   tasks:
     - name: create .kube directory
+      become_user: "{{ service_user }}"
+      become_method: "{{ service_method }}"
       file:
-        path: $HOME/.kube
+        path: '"{{ service_directory }}"/test1'
         state: directory
         owner: "{{ service_user }}"
-        group: "{{ service_user }}"
+        group: "{{ service_group }}"
         mode: 0755
     - name: create test directory
+      become_user: "{{ service_user }}"
+      become_method: "{{ service_method }}"
       file:
-        path: $HOME/test_directory
+        path: '"{{ service_directory }}"/test2'
         state: directory
         owner: "{{ service_user }}"
-        group: "{{ service_user }}"
+        group: "{{ service_group }}"
         mode: 0755

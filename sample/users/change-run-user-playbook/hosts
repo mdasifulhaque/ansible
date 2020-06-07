@@ -3,3 +3,5 @@
 [centos:vars]
 service_user=ansible_service_user
 service_method=sudo
+service_group=wheel
+service_directory= $HOME/test_data_from_remote
