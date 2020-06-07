@@ -1,0 +1,6 @@
+- hosts: test-node
+  become: yes
+  vars: 
+    service_user: root
+
+  tasks: 

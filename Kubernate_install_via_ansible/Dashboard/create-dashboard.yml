@@ -1,0 +1,19 @@
+- hosts: master
+  become: yes
+  vars: 
+    service_user: ansible_serviece_user
+  become_user: "{{service_user}}" 
+  tasks:
+    - name: install kubernetes dashboard
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+      register: dashboard_output 
+    
+    
+    - debug: dashboard_output.stdout_lines
+    
+
+    - name: create dashboard admin user
+      
+
+
+
