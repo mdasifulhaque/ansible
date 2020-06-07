@@ -1,0 +1,41 @@
+- hosts: master
+  become: yes
+  become_user: "{{ service_user }}"
+  vars:
+    service_user: ansible_serviece_user
+    configuration_file_location: $HOME/"{{ service_user }}"/kubernetes_config/files
+  tasks:
+    - name: install kubernetes dashboard
+      #become_user: "{{service_user}}"
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+      register: dashboard_output
+
+    - debug:
+        msg: dashboard_output.stdout_lines
+
+    - name: copy dashboard config file to remote server
+      #become_user: "{{service_user}}"
+      copy:
+        src: cluster-role-rbac.yml
+        dest: "{{ configuration_file_location }}"
+
+    - name: create dashboard admin user
+      shell: kubectl apply -f "{{ configuration_file_location }}"/dashboard-adminuser.yaml
+      register: admin_user_output
+
+    - debug:
+        msg: admin_user_output.stdout_lines
+
+    - name: create cluster role
+      shell: kubectl apply -f "{{ configuration_file_location }}"/cluster-role-rbac.yml
+      register: clustercreate_output
+
+    - debug:
+        msg: clustercreate_output.stdout_lines
+
+    - name: get user secret
+      shell: kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
+      register: secret_token_output
+
+    - debug:
+        msg: secret_token_output.stdout_lines
