@@ -49,21 +49,26 @@
         chdir: $HOME
         creates: calico_pod_network_setup.txt
 
+
     - name: sleep for 60 seconds to make pods running
       wait_for:
         timeout: 60
+
 
     - name: taint nodes
       shell: kubectl taint nodes --all node-role.kubernetes.io/master-
       register: tained_output
 
-    - debug: var=tained_output.stdout_lines
+
+    - debug:
+        msg: tained_output.stdout_lines
 
     - name: get Nodes
       shell: kubectl get nodes -o wide
       register: nodes_status
 
-    - debug: nodes_status.stdout_lines
+    - debug: 
+        mgs: nodes_status.stdout_lines
 
     - name: install kubernetes_dashboard
       become: yes
