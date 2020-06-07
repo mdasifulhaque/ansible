@@ -1,0 +1,74 @@
+- hosts: master
+  become: yes
+  tasks: 
+    - name: initialize the cluster
+      shell: kubeadm init --pod-network-cidr 10.244.0.0/16 >> cluster_initialize.txt
+      args: 
+        chdir: $HOME
+        creates: cluster_initialize.txt
+    - name: sleep for 20 seconds
+      wait_for: 
+        timeout: 20
+    
+    
+    - name: create .kube directory
+      become_user: ansible_service_user
+      become_method: sudo
+      file:
+        path: $HOME/.kube
+        state: directory
+        owner: "{{ansible_user}}"
+        group: "{{ansible_user}}"
+        mode: 0755
+      become: yes
+    
+
+    - name: check if admin.conf file exist
+      stat: 
+        path: /etc/kubernetes/admin.conf
+      register: kubernetes_admin_config
+
+
+    - name: copy admin.conf to user's kube config
+      become_user: ansible_service_user
+      become_method: sudo 
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: $HOME/.kube/config
+        remote_src: yes
+        owner: 
+      when: kubernetes_admin_config.stat.exists
+
+
+    - name: install pod network calico 
+      become: yes
+      become_user: ansible_service_user 
+      shell: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml >> calico_pod_network_setup.txt
+      args: 
+        chdir: $HOME
+        creates: calico_pod_network_setup.txt
+
+    - name: sleep for 60 seconds to make pods running 
+      wait_for: 
+        timeout: 60
+
+    - name: taint nodes 
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+      register: tained_output
+    
+    - debug: var=tained_output.stdout_lines
+    
+    - name: get Nodes
+      shell: kubectl get nodes -o wide
+      register: nodes_status
+    
+    - debug: nodes_status.stdout_lines
+
+    
+    - name: install kubernetes_dashboard 
+      become: yes
+      become_user: ansible_service_user
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+
+
+      
