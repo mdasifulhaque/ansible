@@ -9,4 +9,5 @@
         comment: "Ansible Managment user"
         expires: -1 
         state: present
+        password: "$6$mysecretsalt$pt4Frj89Atm9ZrIzlFAFQcrhZOGE4olKMeKDukmgYVd8oxfL8bYRVWsq2iC5lYB2J9DeeqNNG8OxSCKNNUQ1q/"
   
