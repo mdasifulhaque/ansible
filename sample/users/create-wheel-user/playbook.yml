@@ -7,5 +7,6 @@
         append: yes
         create_home: true
         comment: "Ansible Managment user"
-        expire: -1 
+        expires: -1 
+        state: present
   
