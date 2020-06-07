@@ -1,7 +1,5 @@
 - hosts: testnode
   become: yes
-  vars: 
-    service_user: root
   tasks: 
     - name: copy file to remote host from localhost 
       copy: 

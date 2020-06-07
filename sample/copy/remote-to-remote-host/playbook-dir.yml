@@ -1,4 +1,8 @@
-- hosts: test-node
+- hosts: testnode
   become: yes
-  task: 
-    
+  tasks: 
+    - name: copy file to remote host from localhost 
+      copy: 
+        src: /home/mdasifulhaque/ansible_data/sample/copy/remote-to-remote-host/
+        dest: /home/mdasifulhaque/ansible_data
+        remote_src: yes
