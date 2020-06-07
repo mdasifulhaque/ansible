@@ -1,0 +1,3 @@
+- hosts: testnode
+  tasks: 
+    - name: copy remote files to local directory

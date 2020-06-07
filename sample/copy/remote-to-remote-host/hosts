@@ -1,0 +1,2 @@
+[testnode]
+master_node_backup ansible_host=192.168.10.15 ansible_user=root
