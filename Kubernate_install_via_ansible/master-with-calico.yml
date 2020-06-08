@@ -9,7 +9,7 @@
     - name: initialize the cluster
       become_user: "{{ service_user }}"
       become_method: "{{ service_method }}"
-      shell: kubeadm init --pod-network-cidr 10.244.0.0/16 >> cluster_initialize.txt
+      shell: kubeadm init --pod-network-cidr 10.244.0.0/16 16 --apiserver-advertise-address= {{ ansible_host }}  >> cluster_initialize.txt
       register: result
       until: result.stdout.find("Your Kubernetes master has initialized successfully!") != -1
       retries: 1
