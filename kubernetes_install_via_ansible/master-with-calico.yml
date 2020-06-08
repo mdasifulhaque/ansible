@@ -27,7 +27,6 @@
         mode: 0755
 
     - name: check if admin.conf file exists
-      become_method: sudo
       stat:
         path: "{{ kubeadm_config_file }}"
       register: kubernetes_admin_config
