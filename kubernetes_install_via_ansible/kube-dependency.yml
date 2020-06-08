@@ -91,7 +91,7 @@
   tasks: 
     - name: install kubectl
       yum:
-        name: kubectl-1.18.0
+        name: kubectl-1.18.
         state: present
         allow_downgrade: yes  
 
