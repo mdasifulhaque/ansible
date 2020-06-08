@@ -1,0 +1,26 @@
+- hosts: master
+  gather_facts: false
+  become: yes
+  vars:
+    ansible_become_user: ansible_service_user
+    kubeadm_config_file: /etc/kubernetes/admin.conf
+    service_group: wheel
+  tasks:
+    - name: initialize the cluster
+      become_method: sudo
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  --v=6
+      register: result
+      until: result.stdout.find("Your Kubernetes control-plane has initialized successfully!") != -1
+      retries: 1
+      delay: 20
+
+    - debug: var=result.stdout_lines
+
+    - name: create .kube directory
+      become_method: sudo
+      file:
+        path: $HOME/.kube
+        state: directory
+        owner: "{{service_user}}"
+        group: "{{service_group}}"
+        mode: 0755

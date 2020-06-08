@@ -1,27 +1,24 @@
 - hosts: master
-  become: yes
+  gather_facts: false
   vars:
     service_user: ansible_service_user
     kubeadm_config_file: /etc/kubernetes/admin.conf
     service_group: wheel
-    service_method: sudo
   tasks:
     - name: initialize the cluster
-      become: yes
-      remote_user: "{{ service_user }}"
-      become_method: "{{ service_method }}"
-      shell: kubeadm init --pod-network-cidr 10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  >> cluster_initialize.txt
+      become_user: ansible_service_user
+      become_method: sudo
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  --v=6
       register: result
-      until: result.stdout.find("Your Kubernetes master has initialized successfully!") != -1
+      until: result.stdout.find("Your Kubernetes control-plane has initialized successfully!") != -1
       retries: 1
       delay: 20
-      args:
-        chdir: $HOME
-        creates: cluster_initialize.txt
-   
+
+    - debug: var=result.stdout_lines
+
     - name: create .kube directory
       become_user: "{{ service_user }}"
-      become_method: "{{ service_method }}"
+      become_method: sudo
       file:
         path: $HOME/.kube
         state: directory
@@ -29,23 +26,21 @@
         group: "{{service_group}}"
         mode: 0755
 
-
-    - name: check if admin.conf file exist
+    - name: check if admin.conf file exists
+      become_method: sudo
       stat:
-        path: "{{kubeadm_config_file}}"
+        path: "{{ kubeadm_config_file }}"
       register: kubernetes_admin_config
 
-
     - name: copy admin.conf to user's kube config
-      become_user: "{{service_user}}"
-      become_method: "{{ service_method }}"
+      become_user: "{{ service_user }}"
+      become_method: sudo
       copy:
         src: "{{kubeadm_config_file}}"
         dest: $HOME/.kube/config
         remote_src: yes
-        owner:
+        owner: "{{ service_user }}"
       when: kubernetes_admin_config.stat.exists
-
 
     - name: install pod network calico
       become_user: "{{service_user}}"
@@ -54,26 +49,24 @@
         chdir: $HOME
         creates: calico_pod_network_setup.txt
 
-
     - name: wait for pods to come up
       become_user: "{{service_user}}"
       shell: kubectl get pods -o json
       register: kubectl_get_pods
       until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
-
+      retries: 10
+      delay: 300
 
     - name: taint nodes
       become_user: "{{service_user}}"
       shell: kubectl taint nodes --all node-role.kubernetes.io/master-
       register: tained_output
 
-
-    - debug:
-        vars: tained_output.stdout_lines
+    - debug: var=tained_output.stdout_lines
 
     - name: get Nodes
+      become_user: "{{service_user}}"
       shell: kubectl get nodes -o wide
       register: nodes_status
 
-    - debug: 
-        vars: nodes_status.stdout_lines
+    - debug: var=nodes_status.stdout_lines
