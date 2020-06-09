@@ -46,7 +46,7 @@
 
     - name: create cluster role
       become_user: "{{ service_user }}"
-      shell: kubectl apply -f {{ configuration_file_location }}/cluster-role.yml
+      shell: kubectl apply -f {{ configuration_file_location }}/cluster-role.yaml
       register: clustercreate_output
 
     - debug: var=clustercreate_output.stdout_lines
