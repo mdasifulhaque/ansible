@@ -2,16 +2,25 @@
   vars:
     service_user: ansible_serviece_user
     configuration_file_location: /home/{{ service_user }}/kube_install_data/dashboard
-  remote_user: "{{ service_user }}"
   become: yes
+  become_user: "{{ service_user }}"
   tasks:
+    - name: create log directory
+      become: yes
+      become_user: root
+      file:
+        path: "{{ configuration_file_location }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: wheel
+        mode: 0755
+
     - name: install kubernetes dashboard
       become_user: "{{ service_user }}"
       shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
       register: dashboard_output
 
-    - debug:
-        msg: dashboard_output.stdout_lines
+    - debug: var=dashboard_output.stdout_lines
 
     - name: Copy multiple files in Ansible with different permissions
       copy:
@@ -28,22 +37,20 @@
           }
 
     - name: create dashboard admin user
+      #become_user: "{{ service_usr }}""
       shell: kubectl apply -f {{ configuration_file_location }}/dashboard-adminuser.yaml
       register: admin_user_output
 
-    - debug:
-        msg: "Andmin user create status {{admin_user_output.stdout_lines}}"
+    - debug: var= admin_user_output.stdout_lines}
 
     - name: create cluster role
       shell: kubectl apply -f {{ configuration_file_location }}/cluster-role-rbac.yml
       register: clustercreate_output
 
-    - debug:
-        msg: "Dashboard create status {{ clustercreate_output.stdout_lines}}"
+    - debug: var=clustercreate_output.stdout_lines
 
     - name: get user secret
       shell: kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
       register: secret_token_output
 
-    - debug:
-        msg: "Secrect token for kubernetes dashboard {{ secret_token_output.stdout_lines}}"
+    - debug: var=secret_token_output.stdout_lines
