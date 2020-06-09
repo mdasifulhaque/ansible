@@ -1,12 +1,12 @@
 - hosts: master
-  become: yes
-  become_user: "{{ service_user }}"
   vars:
     service_user: ansible_serviece_user
-    configuration_file_location: $HOME/{{ service_user }}/kubernetes_config/files
+    configuration_file_location: /home/{{ service_user }}/kube_install_data/dashboard
+  remote_user: "{{ service_user }}"
+  become: yes
   tasks:
     - name: install kubernetes dashboard
-      #become_user: "{{service_user}}"
+      become_user: "{{ service_user }}"
       shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
       register: dashboard_output
 
@@ -18,10 +18,14 @@
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
       with_items:
-      - { src: 'cluster-role.yaml' ,dest: '{{ configuration_file_location }}/cluster-role.yaml'}
-      - { src: 'dashboard-adminuser.yaml' ,dest: '{{ configuration_file_location }}/dashboard-adminuser.yaml'}
-
-
+        - {
+            src: "cluster-role.yaml",
+            dest: "{{ configuration_file_location }}/cluster-role.yaml",
+          }
+        - {
+            src: "dashboard-adminuser.yaml",
+            dest: "{{ configuration_file_location }}/dashboard-adminuser.yaml",
+          }
 
     - name: create dashboard admin user
       shell: kubectl apply -f {{ configuration_file_location }}/dashboard-adminuser.yaml

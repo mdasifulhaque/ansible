@@ -1,50 +1,59 @@
 - hosts: master
-  become: yes
+  gather_facts: true
   vars:
-    service_user: ansible_service_user
     kubeadm_config_file: /etc/kubernetes/admin.conf
+    service_user: ansible_service_user
     service_group: wheel
-    service_method: sudo   
+    service_method: sudo
+    local_data: /home/{{ service_user }}/log_data
+  remote_user: "{{ service_user }}"
+  become: yes
   tasks:
+    - name: create log directory
+      file:
+        path: "{{ local_data }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
+        mode: 0755
+
     - name: initialize the cluster
-      remote_user: "{{ service_user }}"
-      become_method: "{{ service_method }}"
-      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  >> cluster_initialize.txt
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  --v=6
       register: result
       until: result.stdout.find("Your Kubernetes control-plane has initialized successfully!") != -1
       retries: 1
       delay: 20
-      args:
-        chdir: $HOME
-        creates: cluster_initialize.txt
-   
+
+    - name: Store Kube init result in local server
+      copy:
+        content: "{{ result.stdout_lines }}"
+        dest: "{{ local_data }}/kube-init.txt"
+
+    - debug: var=result.stdout_lines
+
     - name: create .kube directory
-      become_user: "{{ service_user }}"
-      become_method: "{{ service_method }}"
       file:
         path: $HOME/.kube
         state: directory
-        owner: "{{service_user}}"
-        group: "{{service_group}}"
+        owner: "{{ service_user }}"
+        group: "{{ service_group }}"
         mode: 0755
+      become_user: "{{ service_user }}"
 
-
-    - name: check if admin.conf file exist
+    - name: check if admin.conf file exists
       stat:
-        path: "{{kubeadm_config_file}}"
+        path: "{{ kubeadm_config_file }}"
       register: kubernetes_admin_config
 
-
     - name: copy admin.conf to user's kube config
-      become_user: "{{service_user}}"
-      become_method: "{{ service_method }}"
       copy:
-        src: "{{kubeadm_config_file}}"
-        dest: $HOME/.kube/config
-        remote_src: yes
-        owner:
+        src: "{{ kubeadm_config_file }}"
+        dest: /home/{{ service_user }}/.kube/config
+        remote_src: true
+        owner: "{{ service_user }}"
+        mode: 0755
+        group: "{{ service_group }}"
       when: kubernetes_admin_config.stat.exists
-
 
     - name: install pod network
       become_user: "{{ service_user }}"
@@ -52,3 +61,20 @@
       args:
         chdir: $HOME
         creates: pod_network_setup.txt
+
+    - name: wait for pods to come up
+      become: yes
+      become_user: "{{ service_user }}"
+      shell: kubectl -n kube-system get pod -o json
+      register: kubectl_get_pods
+      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
+      retries: 15
+      delay: 60
+
+    - name: get Nodes
+      become: yes
+      become_user: "{{ service_user }}"
+      shell: kubectl get nodes -o wide
+      register: nodes_status
+
+    - debug: var=nodes_status.stdout_lines
