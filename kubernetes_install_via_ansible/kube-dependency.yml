@@ -3,61 +3,52 @@
   tasks:
     - name: install Docker
       yum:
-        name: docker 
+        name: docker
         state: present
         update_cache: true
 
-
-    - name: Enable Docker 
+    - name: Enable Docker
       service:
         name: docker
-        enabled: yes  
+        enabled: yes
       become: now
-
 
     - name: start Docker
       service:
         name: docker
         state: started
 
-    
     - name: disable SELinux
       command: setenforce 0
       ignore_errors: true
       changed_when: false
 
-
     - name: disable SELinux on reboot
       selinux:
         state: disabled
-    
 
-    - name: checking if net.bridge.bridge-nf-call-ip6tables is set to 1 
-      sysctl: 
-        name: net.bridge.bridge-nf-call-ip6tables 
+    - name: checking if net.bridge.bridge-nf-call-ip6tables is set to 1
+      sysctl:
+        name: net.bridge.bridge-nf-call-ip6tables
         value: "1"
         state: present
-    
-    
+
     - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
       sysctl:
         name: net.bridge.bridge-nf-call-iptables
-        value: "1" 
+        value: "1"
         state: present
-    
 
     - name: Disable SWAP
       shell: swapoff -a
       become: true
 
-
     - name: Commenting Swap entry in /etc/fstab
-      replace: 
+      replace:
         path: /etc/fstab
         regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
-        replace:  '#\1\2\3swap\4'
+        replace: '#\1\2\3swap\4'
         backup: yes
-
 
     - name: add Kubernates' YUM repository
       yum_repository:
@@ -67,36 +58,34 @@
         gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
         gpgcheck: yes
 
-
     - name: install kubelet
-      yum: 
+      yum:
         name: kubelet-1.18.3
         state: present
         update_cache: yes
-    
+
     - name: install kubeadm
-      yum: 
+      yum:
         name: kubeadm-1.18.3
         state: present
-    
+
     - name: start kubelet
       service:
         name: kubelet
         enabled: yes
         state: started
 
-
 - hosts: master
   become: yes
-  tasks: 
+  tasks:
     - name: install kubectl
       yum:
-        name: kubectl-1.18.
+        name: kubectl-1.18.3
         state: present
-        allow_downgrade: yes  
+        allow_downgrade: yes
 
 - hosts: all
-  tasks: 
+  tasks:
     - name: Reboot host and wait for it to restart
       reboot:
         msg: "Reboot initiated by Ansible"
@@ -105,10 +94,3 @@
         pre_reboot_delay: 0
         post_reboot_delay: 30
         test_command: whoami
-
-
- 
-
-
-
-  

@@ -1,0 +1,16 @@
+- hosts: testnode
+  become: yes
+  vars:
+    data_location: "/tmp"
+  tasks:
+    - name: create multiple folder
+      file:
+        path: "{{ items }}"
+        state: directory
+        owner: your_user
+        group: wheel_group
+        mode: 0755
+      with_items:
+        - test1
+        - test2
+        - test4
