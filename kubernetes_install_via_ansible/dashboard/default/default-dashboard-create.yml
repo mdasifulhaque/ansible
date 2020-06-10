@@ -1,0 +1,59 @@
+- hosts: master
+  vars:
+    service_user: ansible_service_user
+    configuration_file_location: /home/{{ service_user }}/kube_install_data/dashboard
+  remote_user: "{{ service_user }}"
+  become: yes
+  tasks:
+    - name: create log directory
+      become_user: root
+      file:
+        path: "{{ configuration_file_location }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: wheel
+        mode: 0755
+
+    - name: install kubernetes dashboard
+      become_user: "{{ service_user }}"
+      shell: kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0/aio/deploy/recommended.yaml
+      register: dashboard_output
+
+    - debug: var=dashboard_output.stdout_lines
+
+    - name: Copying Dashboard files to remote host
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ service_user }}"
+        group: wheel
+      with_items:
+        - {
+            src: "cluster-role.yaml",
+            dest: "{{ configuration_file_location }}/cluster-role.yaml",
+          }
+        - {
+            src: "dashboard-adminuser.yaml",
+            dest: "{{ configuration_file_location }}/dashboard-adminuser.yaml",
+          }
+
+    - name: create dashboard admin user
+      become_user: "{{ service_user }}"
+      shell: kubectl apply -f {{ configuration_file_location }}/dashboard-adminuser.yaml
+      register: admin_user_output
+
+    - debug: var=admin_user_output.stdout_lines
+
+    - name: create cluster role
+      become_user: "{{ service_user }}"
+      shell: kubectl apply -f {{ configuration_file_location }}/cluster-role.yaml
+      register: clustercreate_output
+
+    - debug: var=clustercreate_output.stdout_lines
+
+    - name: get user secret
+      become_user: "{{ service_user }}"
+      shell: kubectl -n kubernetes-dashboard describe secret $(kubectl -n kubernetes-dashboard get secret | grep admin-user | awk '{print $1}')
+      register: secret_token_output
+
+    - debug: var=secret_token_output.stdout_lines

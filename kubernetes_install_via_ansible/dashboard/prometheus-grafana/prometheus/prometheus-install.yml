@@ -1,0 +1,24 @@
+- hosts: master
+  vars:
+    service_user: ansible_service_user
+    download_url: "https://get.helm.sh/helm-v3.2.3-linux-arm64.tar.gz"
+    download_location: "{{ playbook_dir }}"
+    downloaded_filename: helm.taz.gaz
+    remote_directory: /home/{{ service_user }}/kube_install_data/
+
+  tasks:
+    - name: download helm from internet
+      get_url:
+        url: "{{ download_url }}"
+        dest: "{{ download_location }}/{{ download_filename }}"
+        mode: 0755
+
+    - name: Extracting {{downloaded_filename}} to {{ download_location }}
+      unarchive:
+        src: "{{ downloaded_filename }}"
+        dest: "{{ playbook_dir }}/helm"
+
+    - name: moving {{ downloaded_filename }} to remote host {{ ansible_host }}/{{ remote_directory }}/helm
+      copy:
+        src: helm/linux-amd64/helm
+        dest: /usr/local/bin/helm
