@@ -4,7 +4,7 @@
 kube_system_name: kube-system
 service_user: ansible_service_user
 power_user: root
-service_user_data_path: /home/ {{ service_user }}/kube-system
+data_path: /home/ {{ service_user }}/kube-system
 data_path_owner: "{{ service_user }}"
 data_path_group: wheel
 log_path: "{{ service_user_data_path }}/log"
