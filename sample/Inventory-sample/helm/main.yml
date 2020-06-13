@@ -30,6 +30,11 @@
         path: "{{ helm_install_dir }}"
       register: helm_package_transfer_status
 
+    - name: remnove {{ helm_package_base }}
+      file:
+        path: { { helm_package_base } }
+        state: absent
+
     - name: create tiller service account
       shell: kubectl apply -f {{helm_service_account_create_path}}
       register: tiller_account_create
@@ -70,15 +75,15 @@
       shell: kubectl apply -f {{ grafana_config_file }}
       ignore_errors: True
       register: grafana_config_create_stat
-      changed_when: grafana_config_create_stat.rc == 0 or grafana_config_create_stat.rc == 1
-      failed_when: grafana_config_create_stat.rc == 2
+      changed_when: grafana_config_create_stat.rc == 0
+      failed_when: grafana_config_create_stat.rc == 1
 
     - name: create grafana datasource
       shell: kubectl apply -f {{ grafana_values_file }}
       ignore_errors: True
       register: grafana_datasource_create_stat
-      changed_when: grafana_datasource_create_stat.rc == 0 or grafana_datasource_create_stat.rc == 1
-      failed_when: grafana_datasource_create_stat.rc == 2
+      changed_when: grafana_datasource_create_stat.rc == 0
+      failed_when: grafana_datasource_create_stat.rc == 1
 
     - name: install {{ grafana_package }}
-      shell: helm install stable/grafana -f monitoring/grafana/values.yml --namespace monitoring --name grafana --wait
+      shell: helm install {{ grafana_package }} -f {{ grafana_values_file }} --namespace {{ monitoring_namespace }} --name grafana --wait

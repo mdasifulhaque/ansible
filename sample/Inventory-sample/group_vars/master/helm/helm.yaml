@@ -2,6 +2,7 @@
 #****************************************************#
 #variable for dashboard with prometheus and grafana start here.
 helm_package: linux-amd64/helm
+helm_package_base: linux-amd64
 helm_install_dir: /usr/local/bin/helm
 helm_service_account: tiller
 helm_service_namespaces: kube-system
