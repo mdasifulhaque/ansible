@@ -8,14 +8,16 @@ helm_service_namespaces: kube-system
 helm_service_account_role: cluster-admin
 helm_prom_operator_name: prom-operator
 helm_prom_operator_package: stable/prometheus-operator
-helm_config_path: helm
+helm_config_path: config
 helm_service_account_create_path: "{{ helm_config_path }}/service-account.yml"
 helm_cluster_role_binding_path: "{{ helm_config_path }}/role-binding.yml"
 grafana_dashboard_port: 3000
-grafana_namespace: monitoring
-monitoring_namespace_path: "{{ grafana_namespace }}/namespace.yml"
+monitoring_namespace: monitoring
+grafana_config_path: "{{ monitoring_namespace }}/grafana"
+grafana_config_file: "{{ grafana_config_path }}/config.yml"
+grafana_values_file: "{{ grafana_config_path }}/values.yml"
+grafana_package: stable/grafana
+monitoring_namespace_path: "{{ monitoring_namespace }}/namespace.yml"
 monitoring_name: prometheus
-grafana_config_path: "{{ grafana_namespace }}/grafana"
-monitoring_config_file: "{{ grafana_config_path }}/config.yml"
-monitoring_values_file: "{{ grafana_config_path }}/values.yml"
+monitoring_package: stable/prometheus
 #****************************************************#

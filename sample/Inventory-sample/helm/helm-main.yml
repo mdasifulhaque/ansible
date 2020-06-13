@@ -1,0 +1,84 @@
+- hosts: localhost
+  become: yes
+  tasks:
+    - name: download helm from url
+      get_url:
+        url: "{{ helm_url }}"
+        dest: "{{ playbook_dir }}/{{ helm_url | basename }}"
+    - name: extract tar file
+      unarchive:
+        src: "{{ helm_url | basename }}"
+        dest: "{{ playbook_dir }}"
+    - name: remove tar file
+      file:
+        path: "{{ helm_url | basename }}"
+        state: absent
+
+- hosts: master
+  become: yes
+  become_user: "{{ service_user }}"
+  become_method: "{{ service_user_method }}"
+  tasks:
+    - name: moving package {{ helm_package }} to {{ helm_install_dir }}
+      copy:
+        src: "{{ helm_package }}"
+        dest: "{{ helm_install_dir }}"
+        mode: a+x
+
+    - name: check if moved file exist
+      stat:
+        path: "{{ helm_install_dir }}"
+      register: helm_package_transfer_status
+
+    - name: create tiller service account
+      shell: kubectl apply -f {{helm_service_account_create_path}}
+      register: tiller_account_create
+      ignore_errors: True
+      changed_when: tiller_account_create.rc == 0
+      failed_when: tiller_account_create.rc == 1
+
+    - name: helm admin role-binding for cluster
+      shell: kubectl apply -f {{ helm_cluster_role_binding_path }}
+      ignore_errors: True
+      register: role_bind_status
+      changed_when: role_bind_status.rc == 0
+      failed_when: role_bind_status.rc == 1
+
+    - name: Initiate Helm Server
+      command: helm init --service-account {{ helm_service_account }} --upgrade --wait
+      when: helm_package_transfer_status.stat.exists
+
+    - name: create prometheus namespaces
+      shell: kubectl apply -f {{ monitoring_namespace_path }}
+      ignore_errors: True
+      register: namespaces_create_status
+      changed_when: role_bind_status.rc == 0 or role_bind_status.rc == 1
+      failed_when: role_bind_status.rc == 2
+
+    - name: update helm repository
+      command: helm repo update
+      register: helm_update
+      changed_when: "'Update Completed' in helm_update.stdout"
+
+    - name: install prom-operator under monitoring namespaces
+      shell: helm install --name {{ monitoring_name }} {{ monitoring_package }} --namespace {{ monitoring_namespace }}
+      register: prometheus_install_stat
+      failed_when: '"failed to download" in prometheus_install_stat.stderr'
+      changed_when: prometheus_install_stat.rc == 0 or  '"already exists" in prometheus_install_stat.stderr'
+
+    - name: create grafana config
+      shell: kubectl apply -f {{ grafana_config_file }}
+      ignore_errors: True
+      register: grafana_config_create_stat
+      changed_when: grafana_config_create_stat.rc == 0 or grafana_config_create_stat.rc == 1
+      failed_when: grafana_config_create_stat.rc == 2
+
+    - name: create grafana datasource
+      shell: kubectl apply -f {{ grafana_values_file }}
+      ignore_errors: True
+      register: grafana_datasource_create_stat
+      changed_when: grafana_datasource_create_stat.rc == 0 or grafana_datasource_create_stat.rc == 1
+      failed_when: grafana_datasource_create_stat.rc == 2
+
+    - name: install {{ grafana_package }}
+      shell: helm install stable/grafana -f monitoring/grafana/values.yml --namespace monitoring --name grafana --wait

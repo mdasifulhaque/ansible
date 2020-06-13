@@ -1,0 +1,39 @@
+- hosts: master
+  become: yes
+  become_user: "{{ service_user }}"
+  become_method: "{{ service_user_method }}"
+  tasks:
+    - name: install pod network calico
+      #become_user: "{{ service_user }}"
+      shell: kubectl apply -f {{ calico_project_url }}
+      register: calico_install_log
+
+    - name: store calico install log in local server
+      copy:
+        content: "{{ calico_install_log.stdout_lines }}"
+        dest: "{{ kube_install_log }}/calico-install.txt"
+
+    - name: wait for pods to come up
+      #become: yes
+      #become_user: "{{ service_user }}"
+      shell: kubectl -n kube-system get pod -o json
+      register: kubectl_get_pods
+      until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
+      retries: 15
+      delay: 60
+
+    - name: taint nodes
+      #become: yes
+      #become_user: "{{ service_user }}"
+      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+      register: tained_output
+
+    - debug: var=tained_output.stdout_lines
+
+    - name: get Nodes
+      #become: yes
+      #become_user: "{{ service_user }}"
+      shell: kubectl get nodes -o wide
+      register: nodes_status
+
+    - debug: var=nodes_status.stdout_lines
