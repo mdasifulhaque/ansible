@@ -1,32 +1,73 @@
-- name: download helm package
-  hosts: localhost
-  vars:
-    download_url: "https://get.helm.sh/helm-v3.2.3-linux-arm64.tar.gz"
-    download_location: "{{ playbook_dir }}"
-    helm_file: helm.taz.gaz
+- hosts: localhost 
+  vars: 
+    url: "https://get.helm.sh/helm-v2.16.8-linux-amd64.tar.gz"
+  become: yes
   tasks:
-    - name: install tar module if not installed
-      become: yes
-      yum:
-        name: unzip
-        state: present
-
-    - name: download helm from internet
-      get_url:
-        url: "{{ download_url }}"
-        dest: "{{ download_location }}/{{ helm_file }}"
-        mode: 0755
-    - name: Extracting {{helm_file}} to {{ download_location }}
-      unarchive:
-        src: "{{ helm_file }}"
-        dest: "{{ playbook_dir }}/{{ helm_file | basename }}"
-
+   - name: download helm from url
+     get_url:
+        url: "{{ url }}"
+        dest: "{{ playbook_dir }}/{{ url | basename }}"
+   - name: extract tar file 
+     unarchive:
+       src: "{{ url | basename }}"
+       dest: "{{ playbook_dir }}"
+   - name: remove tar file 
+     file: 
+       path: "{{ url | basename }}"
+       state: absent
+   
 - hosts: master
   vars:
-    remote_direcotry: /usr/local/bin/helm
-  tasks:
-    - name: moving {{ helm_file }} to remote host {{ ansible_host }}/{{ remote_directory }}/helm
-      become: yes
-      copy:
-        src: helm/linux-amd64/helm
-        dest: /usr/local/bin/helm
+    helm_package: linux-amd64/helm
+    remote_dir: /usr/local/bin/helm
+    service_user: ansible_service_user
+    cluster_service_account: tiller
+    service_namespaces: kube-system
+    dashboard_port: "3000"
+  become: yes
+  become_user: "{{ service_user }}"
+  become_method: su
+  tasks: 
+    - name: moving package {{ helm_package }} to {{ remote_dir }}   
+      copy: 
+       src: "{{ helm_package }}"
+       dest: "{{ remote_dir }}"
+       mode: a+x   
+
+    - name: check if moved file exist 
+      stat: 
+        path: "{{ remote_dir }}"
+      register: helm_package_transfer_status
+   
+    - name: Initiate Helm Server
+      command: helm init --wait 
+      when: helm_package_transfer_status.stat.exists
+      
+    - name: create tiller service account
+      shell: kubectl create serviceaccount --namespace {{ service_namespaces }} {{ cluster_service_account }}
+      register: tiller_account_create
+      ignore_errors: True
+      changed_when: tiller_account_create.rc == 0 or tiller_account_create.rc == 1
+      failed_when: tiller_account_create.rc == 2
+   
+    - name: helm admin role-binding for cluster 
+      shell: kubectl create clusterrolebinding {{ cluster_service_account }}-cluster-rule --clusterrole=cluster-admin --serviceaccount={{ service_namespaces }}:{{ cluster_service_account }}
+      ignore_errors: True
+      register: role_bind_status
+      changed_when: role_bind_status.rc == 0 or role_bind_status.rc == 1
+      failed_when: role_bind_status.rc == 2 
+
+    - name: deploy tiller and add service account to spec.template.spec
+      shell: kubectl patch deploy --namespace {{ service_namespaces }} {{ cluster_service_account }}-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"{{ cluster_service_account }}"}}}}'
+    - name: update helm repository
+      command: helm repo update 
+      register: helm_update
+      changed_when: "'Update Completed' in helm_update.stdout"
+
+    - name: install prom-operator under monitoring namespaces
+      shell: helm install --name prom-operator stable/prometheus-operator --namespace monitoring
+      register: operator_result
+      failed_when:  '"failed to download" in operator_result.stderr'
+      changed_when: operator_result.rc == 0 or  '"already exists" in operator_result.stderr'
+
+     
