@@ -1,0 +1,7 @@
+---
+service_user: ansible_service_user
+service_user_group: wheel
+service_user_method: su
+helm_url: "https://get.helm.sh/helm-v2.16.8-linux-amd64.tar.gz"
+kube_api_version: rbac.authorization.k8s.io/v1
+kube_api_group: rbac.authorization.k8s.io

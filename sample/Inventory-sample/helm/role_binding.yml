@@ -1,0 +1,12 @@
+apiVersion: "{ { kube_api_version } }"
+kind: ClusterRoleBinding
+metadata:
+  name: "{{ helm_service_account }}"
+roleRef:
+  apiGroup: "{{ kube_api_group }}"
+  kind: ClusterRole
+  name: "{{ helm_service_account_role }}"
+subjects:
+  - kind: ServiceAccount
+    name: "{{ helm_service_account }}"
+    namespace: "{{ helm_service_namespaces }}"
