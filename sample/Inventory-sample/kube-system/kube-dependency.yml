@@ -20,8 +20,9 @@
 
     - name: disable SELinux
       command: setenforce 0
+      register: selinux_stat
       ignore_errors: true
-      changed_when: false
+      changed_when: "'SELinux is disabled' in selinux_stat.stderr "
 
     - name: disable SELinux on reboot
       selinux:

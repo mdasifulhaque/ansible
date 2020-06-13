@@ -32,18 +32,18 @@
 
     - name: remnove {{ helm_package_base }}
       file:
-        path: { { helm_package_base } }
+        path: "{{ helm_package_base }}"
         state: absent
 
     - name: create tiller service account
-      shell: kubectl apply -f {{helm_service_account_create_path}}
+      shell: kubectl apply -f {{ playbook_dir }}/{{helm_service_account_create_path}}
       register: tiller_account_create
       ignore_errors: True
       changed_when: tiller_account_create.rc == 0
       failed_when: tiller_account_create.rc == 1
 
     - name: helm admin role-binding for cluster
-      shell: kubectl apply -f {{ helm_cluster_role_binding_path }}
+      shell: kubectl apply -f {{ playbook_dir }}/{{ helm_cluster_role_binding_path }}
       ignore_errors: True
       register: role_bind_status
       changed_when: role_bind_status.rc == 0

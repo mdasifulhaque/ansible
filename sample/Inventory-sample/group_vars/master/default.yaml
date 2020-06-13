@@ -5,7 +5,7 @@ service_user_home: /home/{{ service_user }}
 kube_local_data: "{{ service_user_home }}/kube_install_data"
 kube_install_log: "{{ kube_local_data }}/log"
 kube_config_file: "{{ service_user_home }}/.kube/config"
-kube_admin_file: /etc/kubernetes/admin.conf
+kube_admin_file: "/etc/kubernetes/admin.conf"
 calico_project_url: https://docs.projectcalico.org/manifests/calico.yaml
 #Primary Variable for setting up master node end here
 #****************************************************#

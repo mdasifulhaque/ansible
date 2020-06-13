@@ -38,7 +38,7 @@
         path: "{{ kube_admin_file }}"
       register: kubernetes_admin_config
 
-    - name: copy admin.conf to user's kube config
+    - name: copy  {{ kube_admin_file }}  to {{ service_user }} user location -->  {{ kube_config_file }}
       copy:
         src: "{{ kube_admin_file }}"
         dest: "{{ kube_config_file }}"
@@ -46,4 +46,4 @@
         owner: "{{ service_user }}"
         mode: 0755
         group: "{{ service_user_group }}"
-        when: kubernetes_admin_config.stat.exists
+      when: kubernetes_admin_config.stat.exists
