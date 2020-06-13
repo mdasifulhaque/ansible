@@ -14,13 +14,11 @@ helm_service_account_create_path: "{{ helm_config_path }}/service-account.yml"
 helm_cluster_role_binding_path: "{{ helm_config_path }}/role_binding.yml"
 grafana_dashboard_port: 3000
 monitoring_namespace: monitoring
-grafana_config_path: "helm/{{ monitoring_namespace }}/grafana"
+grafana_config_path: "{{ monitoring_namespace }}/grafana"
 grafana_config_file: "{{ grafana_config_path }}/config.yml"
 grafana_values_file: "{{ grafana_config_path }}/values.yml"
 grafana_package: stable/grafana
 monitoring_namespace_path: "{{ monitoring_namespace }}/namespace.yml"
 monitoring_name: prometheus
 monitoring_package: stable/prometheus
-# Copy files to remote dir
-remote_helm_service_account_config: "{{kube_local_data}}/{{helm_service_account_create_path}}"
 #****************************************************#
