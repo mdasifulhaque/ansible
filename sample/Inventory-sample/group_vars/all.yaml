@@ -3,8 +3,8 @@ service_user: ansible_service_user
 service_user_group: wheel
 service_user_method: su
 helm_url: "https://get.helm.sh/helm-v2.16.8-linux-amd64.tar.gz"
-kube_api_version: rbac.authorization.k8s.io/v1
-kube_api_group: rbac.authorization.k8s.io
+kube_api_version: "rbac.authorization.k8s.io/v1"
+kube_api_group: "rbac.authorization.k8s.io"
 kube_version: 1.18.3
-kube_repo_baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+kube_repo_baseurl: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
 kube_repo_gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"

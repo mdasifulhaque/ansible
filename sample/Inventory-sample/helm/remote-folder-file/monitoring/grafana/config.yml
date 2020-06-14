@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-grafana-datasource
-  namespace: "{{ grafana_namespace }}"
+  namespace: monitoring
   labels:
     grafana_datasource: "1"
 data:

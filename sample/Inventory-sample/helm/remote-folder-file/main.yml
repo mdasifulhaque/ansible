@@ -1,12 +1,27 @@
 - hosts: master
   become: yes
   tasks:
+    - name: Create remote folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: wheel
+        mode: 0755
+      with_items:
+        [
+          "{{ remote_monitoring_path }}",
+          "{{ remote_grafana_config_path }}",
+          "{{ remote_helm_config_dir }}",
+        ]
+
     - name: copy {{ monitoring_namespace }} and {{ monitoring_name }} files to {{ kube_local_data }}
       copy:
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
         owner: "{{ service_user }}"
         group: wheel
+        mode: 0755
       with_items:
         - {
             src: "{{ helm_service_account_create_path }}",
