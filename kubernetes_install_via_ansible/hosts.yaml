@@ -1,0 +1,19 @@
+all:
+  children:
+    master:
+      hosts:
+        master-backup:
+          ansible_host: 192.168.10.15
+          ansible_user: root
+        master-primary:
+          ansible_host: 192.168.10.11
+          ansible_user: root
+    ungrouped: {}
+    workers:
+      hosts:
+        worker_node_one_kube:
+          ansible_host: 192.168.10.12
+          ansible_user: root
+        worker_node_two_kube:
+          ansible_host: 192.168.10.13
+          ansible_user: root

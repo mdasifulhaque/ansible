@@ -1,0 +1,10 @@
+# Copy files to remote dir
+# Dir need to create helm/config --> helm/monitoring --> monitoring/grafana
+remote_helm_config_dir: "{{ kube_local_data }}/config"
+remote_helm_service_account_config: "{{ remote_helm_config_dir }}/service-account.yml"
+remote_helm_cluster_role_bind: "{{ remote_helm_config_dir }}/role-binding.yml"
+remote_monitoring_path: "{{ kube_local_data }}/monitoring"
+remote_grafana_config_path: "{{ remote_monitoring_path }}/grafana"
+remote_grafana_config_file: "{{ remote_grafana_config_path }}/config.yml"
+remote_grafana_values_file: "{{ remote_grafana_config_path }}/values.yml"
+remote_monitoring_namespace_path: "{{ monitoring_namespace }}/namespace.yml"
