@@ -1,0 +1,45 @@
+- hosts: master
+  become: yes
+  tasks:
+    - name: Create remote folders
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: wheel
+        mode: 0755
+      with_items:
+        [
+          "{{ remote_monitoring_path }}",
+          "{{ remote_grafana_config_path }}",
+          "{{ remote_helm_config_dir }}",
+        ]
+
+    - name: copy {{ monitoring_namespace }} and {{ monitoring_name }} files to {{ kube_local_data }}
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        owner: "{{ service_user }}"
+        group: wheel
+        mode: 0755
+      with_items:
+        - {
+            src: "{{ helm_service_account_create_path }}",
+            dest: "{{ remote_helm_service_account_config }}",
+          }
+        - {
+            src: "{{ helm_cluster_role_binding_path }}",
+            dest: "{{ remote_helm_cluster_role_bind }}",
+          }
+        - {
+            src: "{{ grafana_config_file }}",
+            dest: "{{ remote_grafana_config_file }}",
+          }
+        - {
+            src: "{{ grafana_values_file }}",
+            dest: "{{ remote_grafana_values_file }}",
+          }
+        - {
+            src: "{{ monitoring_namespace_path }}",
+            dest: "{{ remote_grafana_values_file }}",
+          }

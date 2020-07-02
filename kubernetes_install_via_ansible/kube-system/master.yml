@@ -1,0 +1,49 @@
+- hosts: master
+  #remote_user: "{{ service_user }}"
+  become: yes
+  tasks:
+    - name: create log directory
+      file:
+        path: "{{ kube_install_log }}"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user_group }}"
+        mode: 0755
+
+    - name: initialize the cluster
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address={{ ansible_host }}  --v=6
+      register: result
+      until: result.stdout.find("Your Kubernetes control-plane has initialized successfully!") != -1
+      retries: 1
+      delay: 20
+
+    - name: Store Kube init result in local server
+      copy:
+        content: "{{ result.stdout_lines }}"
+        dest: "{{ kube_install_log }}/kube-init.txt"
+
+    - debug: var=result.stdout_lines
+
+    - name: create .kube directory
+      file:
+        path: "{{ service_user_home }}/.kube"
+        state: directory
+        owner: "{{ service_user }}"
+        group: "{{ service_user_group }}"
+        mode: 0755
+      become_user: "{{ service_user }}"
+
+    - name: check if admin.conf file exists
+      stat:
+        path: "{{ kube_admin_file }}"
+      register: kubernetes_admin_config
+
+    - name: copy  {{ kube_admin_file }}  to {{ service_user }} user location -->  {{ kube_config_file }}
+      copy:
+        src: "{{ kube_admin_file }}"
+        dest: "{{ kube_config_file }}"
+        remote_src: true
+        owner: "{{ service_user }}"
+        mode: 0755
+        group: "{{ service_user_group }}"
+      when: kubernetes_admin_config.stat.exists

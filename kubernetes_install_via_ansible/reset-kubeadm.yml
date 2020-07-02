@@ -1,0 +1,7 @@
+- hosts: all
+  become: yes
+  tasks:
+    - name: reset kuebadm
+      shell: kubeadm reset --force
+      register: reset_output
+    - debug: var=reset_output.stdout_lines
