@@ -51,6 +51,18 @@
       changed_when: role_bind_status.rc == 0
       failed_when: role_bind_status.rc == 1
 
+    - name: create prometheus mount directory
+      shell: mkdir /mnt/pv{1,2}
+      register: persist_dir_create_stat
+
+    - debug: var=persist_dir_create_stat.stdout_lines
+
+    - name: apply prometheus mount directory
+      command: kubectl apply -f {{ remote_helm_pcv_config_path }}
+      register: moutn_dir_stat
+
+    - debug: var=mount_dir_stat.stdout_lines
+
     - name: Initiate Helm Server
       command: helm init --service-account {{ helm_service_account }} --upgrade --wait
       when: helm_package_transfer_status.stat.exists
@@ -67,7 +79,7 @@
       register: helm_update
       changed_when: "'Update Completed' in helm_update.stdout"
 
-    - name: install prom-operator under monitoring namespaces
+    - name: install prometheus under monitoring namespaces
       shell: helm install --name {{ monitoring_name }} {{ monitoring_package }} --namespace {{ monitoring_namespace }}
       register: prometheus_install_stat
       failed_when: '"failed to download" in prometheus_install_stat.stderr'

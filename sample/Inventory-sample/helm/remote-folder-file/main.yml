@@ -43,3 +43,7 @@
             src: "{{ monitoring_namespace_path }}",
             dest: "{{ remote_grafana_values_file }}",
           }
+        - {
+            src: "{{ helm_pvc_config_path }}",
+            dest: "{{ remote_helm_pcv_config_path }}",
+          }
